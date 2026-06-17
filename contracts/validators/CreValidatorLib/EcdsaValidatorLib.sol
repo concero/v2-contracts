@@ -92,6 +92,21 @@ abstract contract EcdsaValidatorLib is IValidatorLib {
         return s_dstChainGasLimits[chainSelector];
     }
 
+    /// @notice Returns the EVM gas limits configured for multiple destination chain selectors.
+    /// @param chainSelectors Array of destination chain selectors.
+    /// @return Array of gas limits corresponding to each provided chain selector.
+    function getGasLimitsForChains(
+        uint24[] calldata chainSelectors
+    ) external view returns (uint32[] memory) {
+        uint32[] memory gasLimits = new uint32[](chainSelectors.length);
+
+        for (uint256 i; i < chainSelectors.length; ++i) {
+            gasLimits[i] = s_dstChainGasLimits[chainSelectors[i]];
+        }
+
+        return gasLimits;
+    }
+
     // INTERNAL FUNCTIONS
 
     /// @notice Verifies that a given validation blob contains enough valid, distinct signatures.

@@ -210,43 +210,41 @@ export async function setDstChainVerificationGasLimit(
 	);
 	const validatorLibAbi = [...creValidatorLibAbi, ...ecdsaValidatorAbi];
 
-	const dstChainSelectorsToUpdate: bigint[] = [];
-
-	const upsertGasLimitToUpdate = async (conceroNetwork: string) => {
+	const eligibleNetworks = Object.values(conceroNetworks).filter(network => {
 		try {
-			if (
-				!getEnvVar(
-					`CONCERO_CRE_VALIDATOR_LIB_${getNetworkEnvKey(conceroNetworks[conceroNetwork].name)}`,
-				)
-			) {
-				return;
-			}
-
-			const currentGasLimit = (await publicClient.readContract({
-				address: validatorLib,
-				abi: validatorLibAbi,
-				functionName: "getDstChainGasLimit",
-				args: [conceroNetworks[conceroNetwork].chainSelector],
-			})) as number;
-			const dstChainGasLimit = getVerificationGasLimit(
-				conceroNetworks[conceroNetwork].chainSelector,
-			);
-
-			if (BigInt(currentGasLimit) === dstChainGasLimit) return;
-
-			dstChainSelectorsToUpdate.push(conceroNetworks[conceroNetwork].chainSelector);
-		} catch (e) {
-			console.error(e);
+			return !!getEnvVar(`CONCERO_CRE_VALIDATOR_LIB_${getNetworkEnvKey(network.name)}`);
+		} catch {
+			return false;
 		}
-	};
+	});
 
-	const promises = [];
+	if (eligibleNetworks.length === 0) return;
 
-	for (const conceroNetwork in conceroNetworks) {
-		promises.push(upsertGasLimitToUpdate(conceroNetwork));
+	const chainSelectors = eligibleNetworks.map(network => Number(network.chainSelector));
+	let currentGasLimits: number[] = [];
+
+	try {
+		currentGasLimits = (await publicClient.readContract({
+			address: validatorLib,
+			abi: validatorLibAbi,
+			functionName: "getGasLimitsForChains",
+			args: [chainSelectors],
+		})) as number[];
+	} catch (e) {
+		console.error(e);
+		return;
 	}
 
-	await Promise.all(promises);
+	const dstChainSelectorsToUpdate: bigint[] = [];
+
+	for (let i = 0; i < eligibleNetworks.length; i++) {
+		const chainSelector = eligibleNetworks[i].chainSelector;
+		const expectedGasLimit = getVerificationGasLimit(chainSelector);
+
+		if (BigInt(currentGasLimits[i]) !== expectedGasLimit) {
+			dstChainSelectorsToUpdate.push(chainSelector);
+		}
+	}
 
 	if (dstChainSelectorsToUpdate.length === 0) return;
 

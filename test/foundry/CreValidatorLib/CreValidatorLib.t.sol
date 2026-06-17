@@ -232,6 +232,47 @@ contract CreValidatorLibTest is Test {
         assertFalse(s_validatorLib.isFeeTokenSupported(makeAddr("UnsupportedFeeToken")));
     }
 
+    function test_getGasLimitsForChains() public {
+        uint24 chainSelector1 = 1000;
+        uint24 chainSelector2 = 2000;
+        uint32 gasLimit1 = 100_000;
+        uint32 gasLimit2 = 200_000;
+
+        uint24[] memory chainSelectors = new uint24[](2);
+        chainSelectors[0] = chainSelector1;
+        chainSelectors[1] = chainSelector2;
+
+        uint32[] memory gasLimits = new uint32[](2);
+        gasLimits[0] = gasLimit1;
+        gasLimits[1] = gasLimit2;
+
+        s_validatorLib.setDstChainGasLimits(chainSelectors, gasLimits);
+
+        uint32[] memory retrievedGasLimits = s_validatorLib.getGasLimitsForChains(chainSelectors);
+
+        assertEq(retrievedGasLimits[0], gasLimit1);
+        assertEq(retrievedGasLimits[1], gasLimit2);
+    }
+
+    function test_getGasLimitsForChains_gas() public {
+        vm.pauseGasMetering();
+        uint256 chainAmount = 10_000;
+
+        uint24[] memory chainSelectors = new uint24[](chainAmount);
+        uint32[] memory gasLimits = new uint32[](chainAmount);
+
+        for (uint256 i; i < chainAmount; ++i) {
+            chainSelectors[i] = uint24(i + 1);
+            gasLimits[i] = uint32((i + 1) * 100_000);
+        }
+
+        s_validatorLib.setDstChainGasLimits(chainSelectors, gasLimits);
+
+        vm.resumeGasMetering();
+        uint32[] memory retrievedGasLimits = s_validatorLib.getGasLimitsForChains(chainSelectors);
+        vm.pauseGasMetering();
+    }
+
     // INTERNAL FUNCTIONS
 
     function _getValidation() internal pure returns (bytes memory) {

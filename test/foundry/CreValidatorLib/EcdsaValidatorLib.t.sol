@@ -9,7 +9,7 @@ pragma solidity 0.8.28;
 import {Test} from "forge-std/src/Test.sol";
 import {Vm} from "forge-std/src/Vm.sol";
 
-import {Merkle} from "@murky/merkle/Merkle.sol";
+import {Merkle} from "@murky/Merkle.sol";
 
 import {CreValidatorLib} from "contracts/validators/CreValidatorLib/CreValidatorLib.sol";
 

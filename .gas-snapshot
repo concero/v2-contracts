@@ -1,3 +1,4 @@
+CreValidatorLibTest:test_getGasLimitsForChains_gas() (gas: 9087416)
 EcdsaValidatorLibSignatureTest:test_merkleRoot_gas() (gas: 33507)
 EcdsaValidatorLibSignatureTest:test_merkleRoot_gas_for100msgAnd4signer() (gas: 40575)
 SendMessage:test_conceroSend_NativeFee_gas() (gas: 90128)
